@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Notebook</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+<style>
+:root{--bg:#1f2023;--panel:#27282c;--line:#38393f;--text:#e6e6e8;--muted:#8d8f98;--accent:#7c5cff;--ok:#4ade80;--err:#f87171;--kw:#c792ea;--ty:#82aaff;--str:#c3e88d;--num:#f78c6c;--com:#6b7080;--def:#ffcb6b;--meta:#89ddff}
+:root[data-theme=light]{--bg:#f4f4f6;--panel:#fff;--line:#d9d9de;--text:#1f2023;--muted:#6b6d76;--accent:#5b3fe0;--ok:#15803d;--err:#b91c1c;--kw:#7c3aed;--ty:#1d4ed8;--str:#15803d;--num:#c2410c;--com:#8a8d98;--def:#a16207;--meta:#0e7490}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+header{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;margin:0 auto 0 0;font-weight:600}
+button,select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,textarea:focus-visible,.in:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button:disabled{opacity:.6;cursor:wait}
+#runall{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+#status{font-size:12px;color:var(--muted)}
+#nb{max-width:920px;margin:0 auto;padding:12px 12px 140px}
+.cell{display:flex;gap:8px;position:relative}
+.gut{width:34px;flex:none;padding-top:6px}
+.runb{width:32px;height:32px;border-radius:50%;padding:0;background:var(--accent);border-color:var(--accent);color:#fff}
+.body{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
+.tools{position:absolute;right:8px;top:-11px;display:none;gap:2px;z-index:5}
+.cell:hover .tools,.cell:focus-within .tools{display:flex}
+.tools button{padding:1px 8px;font-size:12px;background:var(--panel)}
+.add{display:flex;gap:6px;justify-content:center;height:22px;opacity:.25;transition:opacity .15s}
+.add:hover,.add:focus-within{opacity:1}
+.add button{padding:0 10px;font-size:12px;line-height:20px}
+.CodeMirror,.CodeMirror-hints{--bg:#1f2023;--panel:#27282c;--line:#38393f;--text:#e6e6e8;--muted:#8d8f98;--accent:#7c5cff;--kw:#c792ea;--ty:#82aaff;--str:#c3e88d;--num:#f78c6c;--com:#6b7080;--def:#ffcb6b;--meta:#89ddff}
+.CodeMirror{height:auto;background:var(--bg);color:var(--text);font:13px/1.55 ui-monospace,Consolas,Menlo,monospace}
+.CodeMirror-gutters{background:var(--panel);border-right:1px solid var(--line)}
+.CodeMirror-linenumber{color:var(--muted)}
+.CodeMirror-cursor{border-left:2px solid var(--accent)}
+.CodeMirror-selected,.CodeMirror-focused .CodeMirror-selected{background:color-mix(in srgb,var(--accent) 30%,transparent)}
+.CodeMirror-matchingbracket{color:var(--text)!important;background:color-mix(in srgb,var(--accent) 35%,transparent)}
+.cm-keyword{color:var(--kw)}.cm-type,.cm-builtin{color:var(--ty)}.cm-def{color:var(--def)}
+.cm-number,.cm-atom{color:var(--num)}.cm-string,.cm-string-2{color:var(--str)}
+.cm-comment{color:var(--com);font-style:italic}.cm-meta{color:var(--meta)}
+.cm-variable,.cm-variable-2,.cm-operator,.cm-punctuation{color:var(--text)}
+.CodeMirror-hints{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 20px #0006;font:13px ui-monospace,Consolas,monospace;z-index:1000;max-height:14em}
+.CodeMirror-hint{color:var(--text);padding:2px 10px}
+li.CodeMirror-hint-active{background:var(--accent);color:#fff}
+.out{margin:0;padding:10px 12px;border-top:1px solid var(--line);white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,Consolas,Menlo,monospace;cursor:text}
+.e{color:var(--err)}.n{color:var(--muted)}
+.in{display:none;background:transparent;border:0;outline:0;color:inherit;font:inherit;padding:0;width:min(40ch,80%);caret-color:var(--accent)}
+.md .view{padding:6px 14px;cursor:text;line-height:1.55}
+.md h1,.md h2,.md h3{margin:.5em 0 .3em}.md p,.md ul{margin:.4em 0}
+.md code{background:var(--bg);padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace}
+.md textarea{width:100%;min-height:80px;border:0;resize:none;background:var(--bg);color:var(--text);padding:10px 14px;font:13px/1.5 ui-monospace,Consolas,monospace;display:block}
+.md textarea[hidden]{display:none}
+.lbar{display:flex;align-items:center;padding:4px 8px;border-bottom:1px solid var(--line)}
+.lbar select{padding:2px 6px;font-size:12px}
+.ttl{margin-left:auto;width:min(170px,45%);background:transparent;border:1px solid transparent;border-radius:4px;color:var(--muted);font:12px ui-monospace,Consolas,monospace;padding:2px 6px;text-align:right}
+.ttl:hover,.ttl:focus{border-color:var(--line);color:var(--text);background:var(--bg)}
+.add select{padding:0 6px;font-size:12px;height:22px}
+.stdin{display:none;width:100%;border:0;border-top:1px solid var(--line);background:var(--bg);color:var(--text);padding:6px 12px;font:12px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
+.frame{display:block;width:100%;height:260px;border:0;border-top:1px solid var(--line);background:#fff}
+.frame[hidden]{display:none}
+.cm-variable-3,.cm-qualifier,.cm-property{color:var(--ty)}.cm-tag{color:var(--kw)}.cm-attribute{color:var(--def)}.cm-bracket{color:var(--muted)}
+.md .empty{color:var(--muted)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;width:min(440px,92vw)}
+dialog::backdrop{background:#0008}
+dialog label{display:block;margin:12px 0 4px;color:var(--muted)}
+dialog input{width:100%;padding:8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
+dialog p{color:var(--muted);font-size:12px;margin:8px 0 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Code Notebook</h1>
+  <span id="status"></span>
+  <select id="addcode" aria-label="Add a code cell"></select>
+  <button id="addtext">+ Text</button>
+  <button id="save">Save</button>
+  <button id="open">Open</button>
+  <button id="share">Share</button>
+  <button id="settings">Settings</button>
+  <button id="theme">Light mode</button>
+  <button id="runall">Run all</button>
+  <input type="file" id="file" accept=".json" hidden>
+</header>
+<div id="nb"></div>
+
+<dialog id="dlg">
+  <form method="dialog">
+    <strong>Execution server</strong>
+    <label for="api">Judge0 API URL</label>
+    <input id="api" autocomplete="off">
+    <label for="key">API key (optional)</label>
+    <input id="key" autocomplete="off" placeholder="Only if your server requires one">
+    <p>Default is the public Judge0 CE server, which is rate limited. For heavier use, run your own Judge0 or use a hosted plan, then paste its URL here.</p>
+    <p style="text-align:right"><button value="ok" id="savecfg">Save</button></p>
+  </form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/r/r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/swift/swift.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const utf8 = {
+  enc: s => btoa(String.fromCharCode(...new TextEncoder().encode(s))),
+  dec: b => new TextDecoder().decode(Uint8Array.from(atob(b), c => c.charCodeAt(0)))
+};
+const cfg = { api: "https://ce.judge0.com", key: "" };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem("cs-cfg") || "{}")); } catch (e) {}
+
+// ---------- autocomplete ----------
+const KEYWORDS = "abstract as async await base bool break byte case catch char checked class const continue decimal default delegate do double dynamic else enum event explicit extern false finally fixed float for foreach get goto if implicit in int interface internal is lock long namespace new nameof null object operator out override params partial private protected public readonly ref return sbyte sealed set short sizeof static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using var virtual void volatile where while yield".split(" ");
+const TYPES = "Action Array ArgumentException Console Convert DateTime Dictionary Enumerable Environment Exception File Func Guid HashSet IEnumerable InvalidOperationException List Math Path Queue Random Regex Stack StringBuilder String Task Thread TimeSpan Tuple".split(" ");
+const MEMBERS = {
+  Console: "WriteLine Write ReadLine Read Clear Error Out In".split(" "),
+  Math: "Abs Ceiling Floor Round Sqrt Pow Max Min Sin Cos Tan Log Log10 Exp Sign Truncate PI E".split(" "),
+  Convert: "ToInt32 ToInt64 ToDouble ToString ToBoolean ToChar ToDecimal ToByte".split(" "),
+  String: "Join Format IsNullOrEmpty IsNullOrWhiteSpace Concat Compare Empty".split(" "),
+  DateTime: "Now Today UtcNow Parse TryParse DaysInMonth".split(" "),
+  Environment: "NewLine Exit Version MachineName".split(" "),
+  Enumerable: "Range Repeat Empty".split(" "), Guid: "NewGuid Empty Parse".split(" "), Thread: "Sleep".split(" ")
+};
+MEMBERS.string = MEMBERS.String;
+const GENERIC = "Add AddRange All Any Append AppendLine Average Clear Contains ContainsKey Count Dequeue Enqueue Equals First FirstOrDefault GetType IndexOf Insert Join Keys Last Length Max Min OrderBy OrderByDescending Peek Pop Push Remove RemoveAt Replace Reverse Select Skip Sort Split StartsWith EndsWith Substring Sum Take ToArray ToList ToLower ToString ToUpper Trim TryGetValue Values Where".split(" ");
+const JSKW = "async await break case catch class const continue default delete do else export extends finally for from function if import in instanceof let new null of return static super switch this throw true try typeof undefined var void while yield false console";
+const LANGS = {
+  python: { n: "Python", mode: "python", re: /^Python \(3\./, id: 71, eof: /EOFError/, t: 'print("Hello, World!")', kw: "and as assert break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield print input range len" },
+  r: { n: "R", mode: "text/x-rsrc", re: /^R \(/, id: 80, t: 'print("Hello, World!")', kw: "if else repeat while function for next break TRUE FALSE NULL print cat paste library return" },
+  sql: { n: "SQL", mode: "text/x-sql", re: /^SQL \(SQLite/, id: 82, t: "SELECT 'Hello, World!' AS greeting;", kw: "SELECT FROM WHERE INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE DROP ALTER JOIN LEFT INNER ON GROUP ORDER BY HAVING LIMIT AND OR NOT NULL AS DISTINCT COUNT" },
+  html: { n: "HTML/CSS", mode: "text/html", t: '<!DOCTYPE html>\n<html>\n<body>\n    <h1>Hello, World!</h1>\n</body>\n</html>', kw: "div span style script body head title href class table form input button" },
+  java: { n: "Java", mode: "text/x-java", re: /^Java \(/, id: 62, eof: /NoSuchElementException/, t: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}', kw: "abstract boolean break case catch class continue default do double else extends final finally float for if implements import int interface long new null package private protected public return static String super switch this throw try void while System Scanner ArrayList HashMap" },
+  kotlin: { n: "Kotlin", mode: "text/x-kotlin", re: /^Kotlin \(/, id: 78, t: 'fun main() {\n    println("Hello, World!")\n}', kw: "class fun val var if else when for while return null true false object interface override private public println readLine package import" },
+  c: { n: "C", mode: "text/x-csrc", re: /^C \(GCC/, id: 50, t: '#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}', kw: "auto break case char const continue default do double else enum extern float for goto if int long register return short signed sizeof static struct switch typedef union unsigned void volatile while printf scanf include define" },
+  cpp: { n: "C++", mode: "text/x-c++src", re: /^C\+\+ \(GCC/, id: 54, t: '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}', kw: "auto bool break case catch char class const continue default delete do double else enum for if include int long namespace new private public return std string struct switch template this throw try using vector void while cout cin endl" },
+  csharp: { n: "C#", mode: "text/x-csharp", re: /^C# \(Mono/, id: 51, t: 'Console.WriteLine("Hello, World!");' },
+  javascript: { n: "JavaScript", mode: "text/javascript", re: /^JavaScript \(Node/, id: 63, t: 'console.log("Hello, World!");', kw: JSKW },
+  typescript: { n: "TypeScript", mode: "text/typescript", re: /^TypeScript/, id: 74, t: 'const message: string = "Hello, World!";\nconsole.log(message);', kw: JSKW + " interface type enum implements private public readonly string number boolean any" },
+  go: { n: "Go", mode: "text/x-go", re: /^Go \(/, id: 60, t: 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n}', kw: "break case chan const continue default defer else for func go if import interface map package range return select struct switch type var fmt Println Printf" },
+  rust: { n: "Rust", mode: "text/x-rustsrc", re: /^Rust \(/, id: 73, t: 'fn main() {\n    println!("Hello, World!");\n}', kw: "as break const continue else enum fn for if impl in let loop match mod mut pub return self struct trait use where while println String Vec" },
+  scala: { n: "Scala", mode: "text/x-scala", re: /^Scala \(/, id: 81, t: 'object Main {\n  def main(args: Array[String]): Unit = {\n    println("Hello, World!")\n  }\n}', kw: "class def else extends false for if import match new null object override private return this trait true try val var while yield println" },
+  dart: { n: "Dart", mode: "application/dart", re: /^Dart/, id: 0, t: 'void main() {\n  print("Hello, World!");\n}', kw: "async await break case catch class const continue else enum extends final for if import in new null return static super switch this throw try var void while print String int double bool List Map" },
+  ruby: { n: "Ruby", mode: "text/x-ruby", re: /^Ruby \(/, id: 72, t: 'puts "Hello, World!"', kw: "begin break case class def do else elsif end false for if in module next nil puts require return self then true unless until when while yield gets" },
+  php: { n: "PHP", mode: "application/x-httpd-php", re: /^PHP \(/, id: 68, t: '<?php\necho "Hello, World!";\n?>', kw: "abstract array break case catch class const continue default do echo else elseif extends for foreach function if new null private public return static switch this throw true try while print_r var_dump" },
+  swift: { n: "Swift", mode: "text/x-swift", re: /^Swift \(/, id: 83, t: 'print("Hello, World!")', kw: "break case class continue default else enum extension false for func guard if import in let nil private public return self struct switch true var while print readLine" }
+};
+Object.entries({ python: [".py"], javascript: [".js"], typescript: [".ts"], ruby: [".rb"], php: [".php"], r: [".R", ".r"], c: [".h", ".c"], cpp: [".h", ".hpp", ".cpp"], java: [".java"] }).forEach(([k, e]) => LANGS[k].ext = e);
+const allCode = lang => cells.filter(c => c.t === "code" && c.lang === lang).map(c => c.v).join("\n");
+
+function csHint(ed, c) {
+  const cs = c.lang === "csharp", cur = ed.getCursor(), line = ed.getLine(cur.line), empty = { list: [], from: cur, to: cur };
+  if (/string|comment/.test(ed.getTokenTypeAt(cur) || "")) return empty;
+  let start = cur.ch;
+  while (start > 0 && /\w/.test(line.charAt(start - 1))) start--;
+  const word = line.slice(start, cur.ch).toLowerCase();
+  let list;
+  if (cs && line.charAt(start - 1) === ".") {
+    let s2 = start - 1, e2 = s2;
+    while (s2 > 0 && /\w/.test(line.charAt(s2 - 1))) s2--;
+    list = MEMBERS[line.slice(s2, e2)] || GENERIC;
+  } else {
+    if (word.length < 2) return empty;
+    const base = cs ? [...KEYWORDS, ...TYPES] : (LANGS[c.lang].kw || "").split(" ");
+    list = [...new Set([...base, ...(allCode(c.lang).match(/[A-Za-z_]\w{2,}/g) || [])])];
+  }
+  const res = list.filter(w => w.toLowerCase().startsWith(word) && w.toLowerCase() !== word)
+                  .sort((a, b) => a.length - b.length || a.localeCompare(b)).slice(0, 40);
+  return { list: res, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, cur.ch) };
+}
+
+// ---------- notebook engine ----------
+// Cells run as one program: using lines, types and methods are hoisted out of Main,
+// and every other statement is placed in Main in cell order, so variables are shared.
+// Cell markers in stdout let us split the output per cell.
+const NEED = "\u0001NEED";
+const MAIN_RE = /static\s+(?:async\s+)?(?:void|int|Task(?:<int>)?)\s+Main\s*\([^)]*\)\s*\{/;
+const TYPE_RE = /^(\[[^\]]*\]\s*)*((public|private|protected|internal|static|abstract|sealed|partial)\s+)*(class|struct|interface|enum)\s/;
+const FIELD_RE = /^((public|private|protected|internal|static|readonly|const)\s+)+[\w<>\[\],.?]+\s+\w+\s*(=|;)/;
+const METH_RE = /^((public|private|protected|internal|static|async|override|virtual)\s+)*(?!(?:if|for|foreach|while|switch|using|lock|catch|return|else|new|throw|await|yield|do|try|fixed|var)\b)[\w<>\[\],.?]+\s+\w+\s*(<[^>]*>)?\s*\([^;{]*\)\s*(\{|=>)/;
+const DEF_USINGS = ["using System;", "using System.Collections.Generic;", "using System.Linq;", "using System.Text;"];
+
+function units(src) { // split a cell into top-level statements/declarations
+  const out = [], n = src.length; let d = 0, p = 0, i = 0, s = 0;
+  const push = e => {
+    const raw = src.slice(s, e), t = raw.trim();
+    if (t) out.push({ text: t, line: src.slice(0, s + raw.search(/\S/)).split("\n").length });
+    s = e;
+  };
+  while (i < n) {
+    const c = src[i], c2 = src[i + 1];
+    if (c === "/" && (c2 === "/" || c2 === "*")) {
+      let e = c2 === "/" ? src.indexOf("\n", i) : src.indexOf("*/", i + 2) + 2;
+      if (e < 2 || (c2 === "/" && e < 0)) e = n;
+      if (!src.slice(s, i).trim()) s = e;
+      i = e; continue;
+    }
+    if (c === '"' || c === "'") {
+      const v = src[i - 1] === "@"; i++;
+      while (i < n && src[i] !== c) { if (src[i] === "\\" && !v) i++; i++; }
+      i++; continue;
+    }
+    if (c === "(") p++; else if (c === ")") p = Math.max(0, p - 1);
+    else if (c === "{") d++;
+    else if (c === "}") {
+      d = Math.max(0, d - 1);
+      if (d === 0 && p === 0 && !/^\s*(else|catch|finally)\b/.test(src.slice(i + 1, i + 40))) push(i + 1);
+    } else if (c === ";" && d === 0 && p === 0) push(i + 1);
+    i++;
+  }
+  push(n);
+  return out;
+}
+function parse(src) {
+  const r = { us: [], mem: [], body: [] };
+  for (const u of units(src)) {
+    const t = u.text;
+    if (/^using\s+(static\s+)?[\w.]+\s*;$/.test(t) || /^using\s+\w+\s*=\s*[\w.<>,\s]+;$/.test(t)) r.us.push(t);
+    else if (TYPE_RE.test(t) || FIELD_RE.test(t)) r.mem.push(u);
+    else if (METH_RE.test(t)) r.mem.push({ line: u.line, text: /\bstatic\b/.test(t.split("(")[0]) ? t : "static " + t });
+    else r.body.push(u);
+  }
+  return r;
+}
+const HELP = lists => `
+public static class __NB { public static System.IO.TextWriter R; public static int C;
+    public static void M(int i) { C = i; R.Write("\\u0001" + i + "\\u0002"); }
+    public static void Mute(bool b) { System.Console.SetOut(b ? System.IO.TextWriter.Null : R); } }
+class __Stdin : System.IO.TextReader {
+    static string[][] L = new string[][]{${lists.map(a => "new string[]{" + a.map(l => JSON.stringify(l)).join(",") + "}").join(",")}};
+    static int[] I = new int[L.Length]; string buf = ""; int pos = 0;
+    void Fill() {
+        if (pos < buf.Length) return;
+        int c = __NB.C;
+        if (I[c] < L[c].Length) { buf = L[c][I[c]++] + "\\n"; pos = 0; System.Console.Out.Write(buf); return; }
+        System.Console.Out.Flush(); System.Console.Error.Write("\\u0001NEED"); System.Environment.Exit(87);
+    }
+    public override int Read() { Fill(); return buf[pos++]; }
+    public override int Peek() { Fill(); return buf[pos]; }
+    public override string ReadLine() { Fill(); int n = buf.IndexOf('\\n', pos); string s = buf.Substring(pos, n - pos); pos = n + 1; return s; }
+}
+`;
+function genSession(list, mute) {
+  const gen = [], map = [];
+  const P = (t, ci, l) => t.split("\n").forEach((x, k) => { gen.push(x); map.push(ci == null ? null : { ci, l: l + k }); });
+  const ps = list.map(c => parse(c.v)), us = new Set(DEF_USINGS);
+  ps.forEach(p => p.us.forEach(u => us.add(u)));
+  us.forEach(u => P(u));
+  P(HELP(list.map(c => c.inputs)));
+  P("public class __Program {");
+  ps.forEach((p, i) => p.mem.forEach(u => P(u.text, i, u.line)));
+  P("public static void Main(string[] __a) { __NB.R = System.Console.Out; System.Console.SetIn(new __Stdin());");
+  ps.forEach((p, i) => { P(`__NB.M(${i}); __NB.Mute(${i < mute});`); p.body.forEach(u => P(u.text, i, u.line)); });
+  P("}}");
+  return { src: gen.join("\n"), map };
+}
+function genProgram(c) { // a cell that already has its own Main runs on its own
+  const m = MAIN_RE.exec(c.v), at = m.index + m[0].length;
+  return { src: c.v.slice(0, at) + " __NB.R = System.Console.Out; System.Console.SetIn(new __Stdin()); __NB.M(0);" + c.v.slice(at) + "\n" + HELP([c.inputs]), map: null };
+}
+
+let langsP = null;
+function langId(L) { // ask the server which language ids it has; fall back to well-known ids
+  langsP = langsP || fetch(cfg.api.replace(/\/$/, "") + "/languages", cfg.key ? { headers: { "X-Auth-Token": cfg.key } } : {}).then(r => r.json()).catch(() => []);
+  return langsP.then(list => {
+    const m = (Array.isArray(list) ? list : []).filter(x => L.re.test(x.name));
+    return m.length ? Math.max(...m.map(x => x.id)) : L.id;
+  });
+}
+async function post(source, id, stdin, extra) {
+  const h = { "Content-Type": "application/json" };
+  if (cfg.key) h["X-Auth-Token"] = cfg.key;
+  const res = await fetch(cfg.api.replace(/\/$/, "") + "/submissions?base64_encoded=true&wait=true",
+    { method: "POST", headers: h, body: JSON.stringify({ language_id: id, source_code: utf8.enc(source), stdin: utf8.enc(stdin || ""), ...(extra ? { additional_files: extra } : {}) }) });
+  if (!res.ok) throw new Error(`Server returned ${res.status}. ${res.status === 429 ? "Rate limit reached; wait a moment or set your own server in Settings." : ""}`);
+  const r = await res.json(), d = v => v ? utf8.dec(v) : "";
+  return { out: d(r.stdout), err: d(r.stderr), comp: d(r.compile_output), msg: d(r.message), st: r.status || {}, time: r.time };
+}
+// Python: echo what the user types so the console reads like a terminal
+const PY_PRE = 'import builtins as __b\n__i = __b.input\n__b.input = lambda p="": (lambda v: (print(v), v)[1])(__i(p))\n';
+function reset(c) { c.out = ""; c.errText = ""; c.note = ""; c.wait = false; c.frame = false; }
+function runHtml(c) {
+  reset(c); c.frame = true; c.el.querySelector(".frame").srcdoc = c.v;
+  return false;
+}
+// Other cells in the same language become files next to this one, named after their titles
+const fileBase = x => { // Java needs the file named after its class
+  const m = x.lang === "java" && /\b(?:class|interface|enum)\s+(\w+)/.exec(x.v);
+  return (m ? m[1] : x.title).replace(/[^\w-]/g, "_") || "untitled";
+};
+async function extraFiles(c) {
+  const L = LANGS[c.lang], others = cells.filter(x => x !== c && x.t === "code" && x.lang === c.lang);
+  if (!L.ext || !others.length) return null;
+  if (typeof JSZip === "undefined") throw new Error("The zip library did not load, so cells can't see each other. Check your connection.");
+  const z = new JSZip(), used = new Set(["Main"]);
+  others.forEach(x => { const b = fileBase(x); if (used.has(b)) return; used.add(b); L.ext.forEach(e => z.file(b + e, x.v)); });
+  return z.generateAsync({ type: "base64" });
+}
+async function runOther(c) { // every non-C# language runs on its own
+  const L = LANGS[c.lang], id = await langId(L);
+  if (!id) throw new Error(`This server has no ${L.n} runtime. Pick another server in Settings.`);
+  const r = await post((c.lang === "python" ? PY_PRE : "") + c.v, id, [...(c.stdin ? c.stdin.split("\n") : []), ...c.inputs].join("\n"), await extraFiles(c));
+  reset(c);
+  if (r.st.id === 6) { c.errText = r.comp || r.msg; return true; }
+  c.out = r.out;
+  if (L.eof && L.eof.test(r.err)) { c.wait = true; return true; }
+  let err = r.err.trim();
+  if (c.lang === "python") err = err.replace(/line (\d+)/g, (m, n) => "line " + Math.max(1, n - 3));
+  if (r.st.id !== 3) { c.errText = err || r.msg || r.st.description; return true; }
+  c.errText = err; c.note = `\n✓ Done in ${r.time}s`;
+  return false;
+}
+
+function finish(res, list, shown, map) { // returns true when the run must stop
+  shown.forEach(c => { c.out = ""; c.errText = ""; c.note = ""; c.wait = false; });
+  if (res.st.id === 6) { // compilation error: point at the cell it came from
+    const m = /Main\.cs\((\d+),/.exec(res.comp), e = m && (map ? map[m[1] - 1] : { ci: 0 });
+    const t = (e && list[e.ci]) || shown[shown.length - 1];
+    t.errText = res.comp.replace(/Main\.cs\((\d+),\d+\)/g, (x, n) => { const q = map ? map[n - 1] : { ci: 0, l: +n }; return q ? `${list[q.ci].title}, line ${q.l}` : x; });
+    return true;
+  }
+  const parts = res.out.split(/\u0001(\d+)\u0002/), txt = {}; let last = -1;
+  for (let k = 1; k < parts.length; k += 2) { last = +parts[k]; txt[last] = parts[k + 1]; }
+  list.forEach((c, i) => { if (shown.includes(c) || i === last) c.out = txt[i] || ""; });
+  const t = list[Math.max(last, 0)];
+  if (res.err.includes(NEED)) { t.wait = true; return true; }
+  if (res.st.id !== 3) {
+    t.errText = (res.err.split("\n").filter(l => !/^\s+at /.test(l)).join("\n").trim() || res.msg || res.st.description);
+    return true;
+  }
+  shown[shown.length - 1].note = `\n✓ Done in ${res.time}s`;
+  return false;
+}
+
+let busy = false, last = null;
+async function runJob(j) {
+  if (j.other) return j.other.lang === "html" ? runHtml(j.other) : runOther(j.other);
+  const g = j.prog ? genProgram(j.prog) : genSession(j.list, j.mute);
+  const list = j.prog ? [j.prog] : j.list, shown = j.prog ? list : list.slice(j.mute);
+  return finish(await post(g.src, await langId(LANGS.csharp)), list, shown, g.map);
+}
+async function exec(req) {
+  if (busy) return;
+  busy = true; $("status").textContent = "Running...";
+  const code = cells.filter(c => c.t === "code"), isCs = c => c.lang === "csharp", isProg = c => isCs(c) && MAIN_RE.test(c.v);
+  const snip = code.filter(c => isCs(c) && !isProg(c)), jobs = [], c0 = req.cell;
+  if (c0 && snip.includes(c0)) { const l = snip.slice(0, snip.indexOf(c0) + 1); jobs.push({ list: l, mute: l.length - 1 }); }
+  else if (c0) jobs.push(isProg(c0) ? { prog: c0 } : { other: c0 });
+  else {
+    if (snip.length) jobs.push({ list: snip, mute: 0 });
+    code.forEach(c => { if (isProg(c)) jobs.push({ prog: c }); else if (!isCs(c)) jobs.push({ other: c }); });
+  }
+  code.forEach(c => { c.busy = true; paint(c); });
+  let cur = null;
+  try {
+    for (const j of jobs) { cur = j.other || j.prog || j.list[j.list.length - 1]; if (await runJob(j)) break; }
+    $("status").textContent = code.some(c => c.wait) ? "Waiting for input" : "";
+  } catch (e) {
+    const t = cur || c0 || code[0];
+    if (t) { reset(t); t.errText = "Could not run this cell.\n" + e.message; }
+    $("status").textContent = "Error";
+  } finally { busy = false; code.forEach(c => { c.busy = false; paint(c); }); }
+}
+function runCell(c) { c.inputs = []; last = { cell: c }; exec(last); }
+function runAll() { cells.forEach(c => c.inputs = []); last = { all: true }; exec(last); }
+
+// ---------- cells ----------
+const cells = [], nb = $("nb");
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem("cs-nb", JSON.stringify(dump())); } catch (e) {} }, 400); }
+const dump = () => ({ format: "csharp-notebook", cells: cells.map(c => ({ t: c.t, v: c.v, l: c.lang, s: c.stdin, n: c.title })) });
+const esc = s => s.replace(/[&<>]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+function md(s) {
+  let h = "", ul = false;
+  for (const raw of s.split("\n")) {
+    const l = esc(raw).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\*([^*]+)\*/g, "<i>$1</i>");
+    let m;
+    if ((m = l.match(/^[-*]\s+(.*)/))) { if (!ul) { h += "<ul>"; ul = true; } h += `<li>${m[1]}</li>`; continue; }
+    if (ul) { h += "</ul>"; ul = false; }
+    if ((m = l.match(/^(#{1,3})\s+(.*)/))) h += `<h${m[1].length}>${m[2]}</h${m[1].length}>`;
+    else if (l.trim()) h += `<p>${l}</p>`;
+  }
+  return (h + (ul ? "</ul>" : "")) || '<p class="empty">Empty text cell. Click to edit.</p>';
+}
+function paint(c) {
+  if (c.t !== "code") return;
+  const o = c.el.querySelector(".out"), has = c.out || c.errText || c.note || c.wait;
+  o.hidden = !has;
+  o.querySelector(".o").textContent = c.out;
+  o.querySelector(".e").textContent = (c.out && c.errText && !c.out.endsWith("\n") ? "\n" : "") + (c.errText || "");
+  o.querySelector(".n").textContent = c.note;
+  c.el.querySelector(".frame").hidden = !c.frame;
+  const i = o.querySelector(".in");
+  i.style.display = c.wait ? "inline-block" : "none";
+  if (c.wait && !c.busy) { i.value = ""; i.focus(); }
+  c.el.querySelector(".runb").textContent = c.busy ? "…" : "▶";
+}
+const last_lang = c => c.lang;
+function focusNext(c) {
+  const i = cells.indexOf(c), n = cells.slice(i + 1).find(x => x.t === "code");
+  n ? n.cm.focus() : add("code", cells.length, last_lang(c));
+}
+function nextName() {
+  let m = 0;
+  cells.forEach(c => { const x = /^untitled(\d+)$/i.exec(c.title || ""); if (x) m = Math.max(m, +x[1]); });
+  return "untitled" + (m + 1);
+}
+function mk(t, v, l, s, n) {
+  const c = { t, v, lang: LANGS[l] ? l : "csharp", stdin: s || "", title: t === "code" ? n || nextName() : "", frame: false, inputs: [], out: "", errText: "", note: "", wait: false, busy: false }, el = document.createElement("div");
+  el.className = "cell"; c.el = el;
+  const tools = '<div class="tools"><button data-a="up" title="Move up">↑</button><button data-a="dn" title="Move down">↓</button><button data-a="del" title="Delete cell">✕</button></div>';
+  if (t === "code") {
+    el.innerHTML = '<div class="gut"><button class="runb" title="Run this cell and the cells above it (Ctrl+Enter)">▶</button></div><div class="body"><div class="lbar"><select class="lsel" aria-label="Language">' + Object.entries(LANGS).map(([k, x]) => `<option value="${k}">${x.n}</option>`).join("") + '</select><input class="ttl" autocomplete="off" spellcheck="false" aria-label="Cell name (other cells in the same language can import it)" title="Cell name. Other cells in the same language can use it like a file in the same folder."></div><textarea></textarea><textarea class="stdin" rows="2" placeholder="Program input (stdin), one value per line" aria-label="Program input"></textarea><iframe class="frame" sandbox="allow-scripts" title="HTML preview" hidden></iframe><pre class="out" hidden><span class="o"></span><span class="e"></span><span class="n"></span><input class="in" autocomplete="off" spellcheck="false" aria-label="Program input"></pre></div>' + tools;
+    c.cm = CodeMirror.fromTextArea(el.querySelector("textarea"), {
+      mode: LANGS[c.lang].mode, lineNumbers: true, indentUnit: 4, tabSize: 4, matchBrackets: true, autoCloseBrackets: true, viewportMargin: Infinity, theme: "app",
+      extraKeys: {
+        Tab: x => x.somethingSelected() ? x.indentSelection("add") : x.replaceSelection("    ", "end"),
+        "Shift-Tab": x => x.indentSelection("subtract"),
+        "Ctrl-Space": x => x.showHint({ hint: h => csHint(h, c), completeSingle: false }),
+        "Ctrl-Enter": () => runCell(c), "Cmd-Enter": () => runCell(c),
+        "Shift-Enter": () => { runCell(c); focusNext(c); }
+      }
+    });
+    c.cm.setValue(v);
+    c.cm.on("change", () => { c.v = c.cm.getValue(); save(); });
+    c.cm.on("inputRead", (ed, ch) => { if (ch.origin === "+input" && /^[\w.]$/.test(ch.text[0]) && !ed.state.completionActive) ed.showHint({ hint: h => csHint(h, c), completeSingle: false }); });
+    const sel = el.querySelector(".lsel"), sd = el.querySelector(".stdin");
+    const setup = () => { sel.value = c.lang; sd.style.display = c.lang === "csharp" || c.lang === "html" ? "none" : "block"; };
+    const ttl = el.querySelector(".ttl"); ttl.value = c.title; ttl.oninput = () => { c.title = ttl.value.trim(); save(); };
+    sd.value = c.stdin; sd.oninput = () => { c.stdin = sd.value; save(); }; setup();
+    sel.onchange = () => { // keep the user's code; swap in the Hello World template only if the cell is empty or untouched
+      const old = LANGS[c.lang], now = c.cm.getValue().trim(); c.lang = sel.value;
+      c.cm.setOption("mode", LANGS[c.lang].mode);
+      if (!now || now === old.t.trim()) c.cm.setValue(LANGS[c.lang].t);
+      reset(c); setup(); paint(c); save();
+    };
+    el.querySelector(".runb").onclick = () => runCell(c);
+    const inp = el.querySelector(".in");
+    inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); c.inputs.push(inp.value); c.wait = false; paint(c); exec(last); } };
+    el.querySelector(".out").onclick = () => { if (c.wait) inp.focus(); };
+  } else {
+    el.innerHTML = '<div class="gut"></div><div class="body md"><div class="view"></div><textarea hidden aria-label="Text cell"></textarea></div>' + tools;
+    const view = el.querySelector(".view"), ta = el.querySelector("textarea");
+    const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
+    c.edit = () => { view.hidden = true; ta.hidden = false; ta.value = c.v; fit(); ta.focus(); };
+    view.innerHTML = md(v); view.onclick = c.edit; ta.oninput = () => { c.v = ta.value; fit(); save(); };
+    ta.onblur = () => { c.v = ta.value; ta.hidden = true; view.hidden = false; view.innerHTML = md(c.v); };
+  }
+  el.querySelector(".tools").onclick = e => {
+    const a = e.target.dataset.a, i = cells.indexOf(c);
+    if (a === "del") cells.splice(i, 1);
+    else if (a === "up" && i > 0) [cells[i - 1], cells[i]] = [cells[i], cells[i - 1]];
+    else if (a === "dn" && i < cells.length - 1) [cells[i + 1], cells[i]] = [cells[i], cells[i + 1]];
+    else return;
+    render();
+  };
+  return c;
+}
+function fillAdd(sel, cb) { // "+ Code" drop-down: pick a language to create a cell
+  sel.innerHTML = '<option value="">+ Code</option>' + Object.entries(LANGS).map(([k, x]) => `<option value="${k}">${x.n}</option>`).join("");
+  sel.onchange = () => { const v = sel.value; sel.value = ""; if (v) cb(v); };
+}
+function render() {
+  const f = [], bar = i => {
+    const b = document.createElement("div"); b.className = "add";
+    b.innerHTML = '<select class="addsel" aria-label="Add a code cell"></select><button>+ Text</button>';
+    fillAdd(b.children[0], l => add("code", i, l)); b.children[1].onclick = () => add("text", i);
+    return b;
+  };
+  cells.forEach((c, i) => f.push(bar(i), c.el));
+  f.push(bar(cells.length));
+  nb.replaceChildren(...f);
+  cells.forEach(c => c.cm && c.cm.refresh());
+  save();
+}
+function add(t, i, lang) {
+  const c = mk(t, t === "code" ? LANGS[lang].t : "", lang); cells.splice(i, 0, c); render();
+  t === "code" ? c.cm.focus() : c.edit();
+}
+function load(list) {
+  cells.length = 0;
+  list.forEach(x => cells.push(mk(x.t === "text" ? "text" : "code", x.v || "", x.l, x.s, x.n)));
+  render(); cells.forEach(paint);
+}
+
+const DEFAULT = [
+  { t: "text", v: "# Code notebook\nEvery code cell has its own language and a name (top right). Use the **+ Code** menu to pick a language.\n- **▶** runs a cell (C# cells also run the C# cells above it)\n- **Run all** runs every cell in order\n- C# cells share variables with each other\n- Other cells can use cells of the same language like files in one folder: `import mymath` in Python, `require('./mymath')` in JavaScript, `#include \"mymath.h\"` in C/C++\n- HTML cells show a live preview" },
+  { t: "code", l: "csharp", v: 'int x = 5;\nint Square(int n) => n * n;\nConsole.WriteLine("x is " + x);' },
+  { t: "code", l: "csharp", v: "Console.WriteLine(Square(x));" },
+  { t: "code", l: "python", n: "mymath", v: "def double(n):\n    return n * 2" },
+  { t: "code", l: "python", v: "import mymath\nprint(mymath.double(21))" },
+  { t: "code", l: "html", v: '<h1 style="font-family:sans-serif">Hello from HTML</h1>' },
+  { t: "code", l: "python", v: 'name = input("Your name: ")\nprint(f"Hello, {name}!")' }
+];
+try {
+  const m = location.hash.match(/#nb=(.+)/), s = localStorage.getItem("cs-nb");
+  load(m ? JSON.parse(utf8.dec(decodeURIComponent(m[1]))).cells : s ? JSON.parse(s).cells : DEFAULT);
+} catch (e) { load(DEFAULT); }
+
+// ---------- toolbar ----------
+$("runall").onclick = runAll;
+fillAdd($("addcode"), l => add("code", cells.length, l));
+$("addtext").onclick = () => add("text", cells.length);
+$("save").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(dump(), null, 2)], { type: "application/json" }));
+  a.download = "notebook.csnb.json"; a.click(); URL.revokeObjectURL(a.href);
+};
+$("open").onclick = () => $("file").click();
+$("file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => { try { load(JSON.parse(t).cells); } catch (x) { $("status").textContent = "Could not read that file"; } });
+  e.target.value = "";
+};
+$("share").onclick = async () => {
+  const url = location.href.split("#")[0] + "#nb=" + encodeURIComponent(utf8.enc(JSON.stringify(dump())));
+  history.replaceState(null, "", url);
+  try { await navigator.clipboard.writeText(url); $("status").textContent = "Link copied"; } catch (e) { prompt("Copy this link:", url); }
+};
+$("settings").onclick = () => { $("api").value = cfg.api; $("key").value = cfg.key; $("dlg").showModal(); };
+$("savecfg").onclick = () => {
+  langsP = null; cfg.api = $("api").value.trim() || "https://ce.judge0.com"; cfg.key = $("key").value.trim();
+  try { localStorage.setItem("cs-cfg", JSON.stringify(cfg)); } catch (e) {}
+};
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $("theme").textContent = t === "dark" ? "Light mode" : "Dark mode";
+  try { localStorage.setItem("cs-theme", t); } catch (e) {}
+}
+let th = "dark"; try { th = localStorage.getItem("cs-theme") || "dark"; } catch (e) {}
+setTheme(th);
+$("theme").onclick = () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+</script>
+</body>
+</html>
